@@ -10,10 +10,13 @@ ENV SHELL /usr/bin/zsh
 # サーバーを日本に変更
 RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list
 
-#パッケージインストール
-RUN set -x \
-&&  apt-get update \
-&&  apt upgrade -y --no-install-recommends\
+# RUN apt-get update && \
+#     apt-get install -y language-pack-ja-base language-pack-ja locales && \
+#     locale-gen ja_JP.UTF-8
+
+# #パッケージインストール
+# RUN set -x \
+RUN  apt-get update \
 &&  apt-get install -y --no-install-recommends \
                 sudo \
                 zsh \
@@ -22,12 +25,13 @@ RUN set -x \
                 make \
                 curl \
                 xz-utils \
-                file 　\
+                file \
                 ## network
                 net-tools \
-                ## japanese
+                #japanase
                 language-pack-ja-base \
-                language-pack-ja　\
+                language-pack-ja \
+                locales \
                 ##形態素解析
                 ##mecab
                 mecab \
@@ -47,17 +51,35 @@ RUN useradd -m ${USER} \
 ## sudo passを無くす
 &&  echo "${USER} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER
 
-#mecabの辞書をダウンロード
-RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git \
-    && cd mecab-ipadic-neologd \
-    && bin/install-mecab-ipadic-neologd -n -y
+# install mecab from github
+WORKDIR /opt
+RUN git clone https://github.com/taku910/mecab.git
+WORKDIR /opt/mecab/mecab
+RUN ./configure  --enable-utf8-only \
+&&  make \
+&&  make check \
+&&  make install \
+&&  ldconfig
+
+WORKDIR /opt/mecab/mecab-ipadic
+RUN ./configure --with-charset=utf8 \
+&&  make \
+&&  make install
+
+# neolog-ipadic.
+# mecab-ipadic-neologd
+RUN apt-get install -y git
+RUN git clone https://github.com/neologd/mecab-ipadic-neologd.git
+RUN cd mecab-ipadic-neologd && ( echo yes | ./bin/install-mecab-ipadic-neologd )
 
 # python 
-RUN python3 -m pip --no-cache-dir install --upgrade \
-                                            fastprogress \
-                                            japanize-matplotlib \
-                                            autopep8 \
-                                            jupyterlab_code_formatter
+RUN python -m pip --no-cache-dir install --upgrade \
+jupyterlab \
+fastprogress \
+japanize-matplotlib \
+autopep8 \
+jupyterlab_code_formatter \
+jupyterlab-nvdashboard
 
 # nodejs 12.x
 RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - \
@@ -68,7 +90,8 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - \
 RUN jupyter labextension install @lckr/jupyterlab_variableinspector \
 # 自動整形
 &&  jupyter labextension install @ryantam626/jupyterlab_code_formatter \
-&&  jupyter serverextension enable --py jupyterlab_code_formatter
+&&  jupyter serverextension enable --py jupyterlab_code_formatter \
+&&  jupyter labextension install jupyterlab-nvdashboard
 
 ## zsh
 COPY .zshrc ${HOME}
