@@ -78,25 +78,49 @@ jupyterlab \
 fastprogress \
 japanize-matplotlib \
 autopep8 \
-jupyterlab_code_formatter \
-jupyterlab-nvdashboard
+black \
+python-language-server[all] \
+# jupyter lab
+jupyterlab-nvdashboard \
+jupyter-lsp \
+ipympl \
+#デバック
+xeus-python \
+ptvsd \
+# tensorboard
+jupyter-tensorboard
 
 # nodejs 12.x
 RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - \
 &&  sudo apt-get install -y nodejs
 
-# jupyter lab
-# 変数の中身を確認
-RUN jupyter labextension install @lckr/jupyterlab_variableinspector \
-# 自動整形
-&&  jupyter labextension install @ryantam626/jupyterlab_code_formatter \
-&&  jupyter serverextension enable --py jupyterlab_code_formatter \
-&&  jupyter labextension install jupyterlab-nvdashboard
-
 ## zsh
 COPY .zshrc ${HOME}
 # ユーザー指定
-USER ${USER}
+# USER ${USER}
+
+RUN jupyter notebook --generate-config \
+&&  sed -i.back \
+    -e "s:^#c.NotebookApp.token = .*$:c.NotebookApp.token = u'':" \
+    -e "s:^#c.NotebookApp.ip = .*$:c.NotebookApp.ip = '0.0.0.0':" \
+    -e "s:^#c.NotebookApp.open_browser = .*$:c.NotebookApp.open_browser = False:" \
+    /home/${USER}/.jupyter/jupyter_notebook_config.py
+
+# jupyter lab
+# 変数の中身を確認
+RUN jupyter labextension install @lckr/jupyterlab_variableinspector \
+# GPU 可視化
+&&  jupyter labextension install jupyterlab-nvdashboard \
+# 補完機能
+&&  jupyter labextension install @krassowski/jupyterlab-lsp \
+# matpltlib
+&&  jupyter labextension install @jupyter-widgets/jupyterlab-manager \
+# デバッグ
+&&  jupyter labextension install @jupyterlab/debugger \
+# tensorboard
+&&  jupyter labextension install jupyterlab_tensorboard 
+
 # ディレクトリを指定
+USER ${USER}
 WORKDIR ${HOME}
 CMD ["/bin/zsh"]
