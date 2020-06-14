@@ -23,6 +23,7 @@ RUN  apt-get update \
                 vim \
                 git \
                 make \
+                cmake \
                 curl \
                 wget \
                 xz-utils \
