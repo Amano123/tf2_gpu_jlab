@@ -24,6 +24,7 @@ RUN  apt-get update \
                 git \
                 make \
                 curl \
+                wget \
                 xz-utils \
                 file \
                 ## network
