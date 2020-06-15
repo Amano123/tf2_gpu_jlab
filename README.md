@@ -6,7 +6,7 @@ GPU環境を整える
 まず、自然言語を扱うので、形態素解析は必要
 
 - [X] ~~*Mecab*~~ [2020-06-02]
-- [X] ~~*jumann++  version[2.0.0-rc2]*~~ [2020-06-14]
+- [X] ~~*jumann pp  version 2.0.0*~~ [2020-06-14]
 - [ ] elasticsearch
   - [ ] sudachi（要考察）
 
