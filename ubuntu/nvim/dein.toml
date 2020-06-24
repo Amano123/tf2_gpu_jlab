@@ -1,0 +1,72 @@
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]]
+repo = 'vim-scripts/autodate.vim'
+hook_add = '''
+    let g:autodate_keyword_pre = 'Modified:'
+    let g:autodate_keyword_post = '\.'
+    let g:autodate_format = '%Y-%m-%d'
+    let g:autodate_lines = 10
+    let g:autodate_start_line = 1
+'''
+
+[[plugins]]
+repo = 'cespare/vim-toml'
+
+[[plugins]]
+repo = 'Shougo/neosnippet-snippets'
+
+[[plugins]]
+repo = 'cohama/lexima.vim'
+hook_add = '''
+    call lexima#add_rule({'char': '<C-l>', 'at': '\%#)', 'leave': 1})
+    call lexima#add_rule({'char': '<C-l>', 'at': '\%#"', 'leave': 1})
+    call lexima#add_rule({'char': '<C-l>', 'at': '\%#]', 'leave': 1})
+    call lexima#add_rule({'char': '<C-l>', 'at': '\%#}', 'leave': 1})
+'''
+
+[[plugins]]
+repo = 'Yggdroot/indentLine'
+hook_add = '''
+    let g:indentLine_char = '│'
+    let g:indentLine_leadingSpaceChar = ' '
+    let g:indentLine_first_char = '│'
+    let g:indentLine_showFirstIndentLevel = 1
+    let g:indentLine_leadingSpaceEnabled = 1
+    let g:indentLine_color_term = 61
+'''
+
+[[plugins]]
+repo = 'itchyny/lightline.vim'
+hook_add = '''
+    set laststatus=2
+    set noshowmode
+    let g:lightline = {
+    \    'active': {
+    \        'left': [['mode', 'paste'], ['readonly', 'filename']],
+    \        'right': [['lineinfo', 'percent'], ['fileformat', 'filencoding', 'filetype']]
+    \    },
+    \    'component_function': {
+    \        'filename': 'LightLineFileNameWithParentDir'
+    \    }
+    \}
+    function! LightLineFileNameWithParentDir()
+        let modified = &modified ? ' +' : ''
+        if expand('%:t') ==# ''
+            let filename = '[No Name]'
+        else
+            let dirfiles = split(expand('%:p'), '/')
+            if len(dirfiles) < 2
+                let filename = dirfiles[0]
+            else
+                let filename = dirfiles[-2] . '/' . dirfiles[-1]
+            endif
+        endif
+        return filename . modified
+    endfunction
+'''
+
+
+[[plugins]]
+repo = 'junk-e/identity.vim'
