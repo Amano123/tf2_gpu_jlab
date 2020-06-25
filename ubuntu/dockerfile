@@ -1,0 +1,200 @@
+FROM tensorflow/tensorflow:2.1.1-gpu
+
+LABEL maintainer="amano123"
+
+ENV USER "docker"
+ENV HOME /home/${USER}
+ENV DEBCONF_NOWARNINGS yes
+ENV SHELL /usr/bin/zsh
+
+# Juman knp version
+# 1.02
+# ENV JUMANPP_VERSION 2.0.0-rc3 
+# ENV JUMAN_VERSION   7.01
+# ENV KNP_VERSION     4.19
+
+# サーバーを日本に変更
+# 多分早くなる
+RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list
+
+# #パッケージインストール
+# RUN set -x \
+RUN  add-apt-repository ppa:neovim-ppa/stable \
+&&  apt-get update \
+&&  apt-get install -y --no-install-recommends \
+                sudo \
+                zsh \
+                # vim \
+                neovim \
+                git \
+                make \
+                cmake \
+                curl \
+                wget \
+                xz-utils \
+                # あれば良し
+                # nano \
+                file \
+                ## network
+                net-tools \
+                #japanase
+                language-pack-ja-base \
+                language-pack-ja \
+                locales \
+                ##形態素解析
+                ##mecab
+                mecab \
+                libmecab-dev \
+                mecab-ipadic-utf8 
+
+# 日本語化
+RUN locale-gen ja_JP.UTF-8 
+ENV LANG ja_JP.UTF-8
+ENV LC_CTYPE ja_JP.UTF-8
+RUN localedef -f UTF-8 -i ja_JP ja_JP.utf8
+
+# USER
+RUN echo "root:root" | chpasswd && \
+    adduser --disabled-password --gecos "" "${USER}" && \
+    echo "${USER}:${USER}" | chpasswd && \
+    echo "%${USER}    ALL=(ALL)   NOPASSWD:    ALL" >> /etc/sudoers.d/${USER} && \
+    chmod 0440 /etc/sudoers.d/${USER} 
+
+# install mecab from github
+WORKDIR /opt
+RUN git clone https://github.com/taku910/mecab.git
+WORKDIR /opt/mecab/mecab
+RUN ./configure  --enable-utf8-only \
+    && make \
+    && make check \
+    && make install \
+    && ldconfig
+
+WORKDIR /opt/mecab/mecab-ipadic
+RUN ./configure --with-charset=utf8 \
+    && make \
+    && make install
+
+# neolog-ipadic.
+# mecab-ipadic-neologd
+RUN apt-get install -y git
+RUN git clone https://github.com/neologd/mecab-ipadic-neologd.git
+RUN cd mecab-ipadic-neologd && ./bin/install-mecab-ipadic-neologd -n -y
+# 多分これで指定無しでNEologdが使える必要なかったらコメントアウト
+RUN echo "dicdir = /usr/local/lib/mecab/dic/mecab-ipadic-neologd" > /usr/local/etc/mecabrc
+
+# juman
+COPY analysis/juman-7.01/ ${HOME}/juman/
+# jumanpp
+COPY analysis/jumanpp-2.0/ ${HOME}/jumanpp/
+# knp
+COPY analysis/knp-4.20/ ${HOME}/knp/
+
+# juman
+WORKDIR ${HOME}/juman/
+RUN tar xf juman-7.01.tar.bz2 && \
+    cd juman-7.01 && \
+    ./configure --prefix=/usr/local/ && \
+    make && \
+    make install && \ 
+    cp /usr/local/etc/jumanrc $HOME/.jumanrc
+
+# juman pp
+WORKDIR ${HOME}/jumanpp/
+RUN cat jumanpp-2.0-* >> jumanpp-2.0.0-rc2.tar.xz && \
+    tar Jxfv jumanpp-2.0.0-rc2.tar.xz && \
+    cd jumanpp-2.0.0-rc2/ && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/ && \
+    make && \
+    make install
+
+# knp
+WORKDIR ${HOME}/knp/
+RUN cat knp-4.20-* >> knp-4.20.tar.bz2 && \
+    tar xf knp-4.20.tar.bz2 && \
+    cd knp-4.20 && \
+    ./configure --prefix=/usr/local/ --with-juman-prefix=/usr/local/ && \
+    make && \
+    make install
+
+WORKDIR ${HOME}
+RUN rm -rf ${HOME}/juman/ ${HOME}/jumanpp/ ${HOME}/knp/
+
+# python 
+RUN python -m pip --no-cache-dir install --upgrade \
+    elasticsearch \
+    jupyterlab \
+    fastprogress \
+    japanize-matplotlib \
+    autopep8 \
+    black \
+    python-language-server[all] \
+    # jupyter lab
+    jupyterlab-nvdashboard \
+    jupyter-lsp \
+    ipympl \
+    # デバック
+    xeus-python \
+    ptvsd \
+    # tensorboard
+    tornado \
+    jupyter-tensorboard \
+    six \
+    # ginza
+    ginza \
+    # juman
+    pyknp \
+    # neovim
+    neovim \
+    msgpack-python \
+    jedi 
+
+# nodejs 12.x
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - \
+    &&  sudo apt-get install -y nodejs
+
+RUN npm install -g yarn
+
+## zsh
+COPY .zshrc ${HOME}
+# ユーザー指定
+# USER ${USER}
+
+# jupyter lab 設定
+RUN jupyter notebook --generate-config \
+    &&  sed -i.back \
+        -e "s:^#c.NotebookApp.token = .*$:c.NotebookApp.token = u'':" \
+        -e "s:^#c.NotebookApp.ip = .*$:c.NotebookApp.ip = '0.0.0.0':" \
+        -e "s:^#c.NotebookApp.open_browser = .*$:c.NotebookApp.open_browser = False:" \
+        /home/${USER}/.jupyter/jupyter_notebook_config.py
+
+# jupyter lab
+# 変数の中身を確認
+RUN jupyter labextension install @lckr/jupyterlab_variableinspector \
+    # GPU 可視化
+    &&  jupyter labextension install jupyterlab-nvdashboard \
+    # 補完機能
+    &&  jupyter labextension install @krassowski/jupyterlab-lsp \
+    # matpltlib
+    &&  jupyter labextension install @jupyter-widgets/jupyterlab-manager \
+    # デバッグ
+    &&  jupyter labextension install @jupyterlab/debugger \
+    # tensorboard
+    &&  jupyter labextension install jupyterlab_tensorboard 
+
+RUN mkdir -p ${HOME}/.cache/dein
+
+# RUN mkdir -p ${HOME}/.config
+COPY ./nvim ${HOME}/.config/nvim
+RUN chmod -R 777 ${HOME}/.cache/
+RUN chmod -R 777 ${HOME}/.config/
+RUN chmod -R 777 ${HOME}/.local/
+
+# ディレクトリを指定
+USER ${USER}
+
+WORKDIR ${HOME}
+
+CMD ["/bin/zsh"]

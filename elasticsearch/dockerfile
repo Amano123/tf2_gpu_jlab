@@ -1,0 +1,31 @@
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+
+LABEL maintainer="amano123"
+
+# sudachi download url
+ENV SUDACHI_URL=https://github.com/WorksApplications/elasticsearch-sudachi/releases/download/v7.8.0-2.0.2/analysis-sudachi-7.8.0-2.0.2.zip
+# dictionary folder path
+ENV DICT_FILE_PATH=/usr/share/elasticsearch/config
+# home dictionary path
+ENV HOME=/usr/share/elasticsearch
+# sudachi.json
+ENV SUDACHI_JSON_URL=https://raw.githubusercontent.com/WorksApplications/Sudachi/develop/src/main/resources/sudachi_fulldict.json
+
+
+# 日本語全文検索pulgin
+RUN elasticsearch-plugin install analysis-kuromoji \
+&&  elasticsearch-plugin install analysis-icu \
+&&  elasticsearch-plugin install ${SUDACHI_URL}
+
+# need plugin
+RUN yum install -y wget
+
+# sudachi settings
+RUN set -x \
+# 2020/03/30 の辞書データ(変更注意)
+&&  wget https://object-storage.tyo2.conoha.io/v1/nc_2520839e1f9641b08211a5c85243124a/sudachi/sudachi-dictionary-20200330-full.zip \
+&&  unzip sudachi-dictionary-20200330-full.zip \
+&&  mv ${HOME}/sudachi-dictionary-20200330/system_full.dic ${DICT_FILE_PATH}/ \
+&&  touch ${DICT_FILE_PATH}/my_jisho.dic \
+&&  rm -rf ${DICT_FILE_PATH}/sudachi-dictionary-20200330 ${DICT_FILE_PATH}/sudachi-dictionary-20200330.zip \
+&&  wget -P ${HOME}/analysis-sudachi/ ${SUDACHI_JSON_URL} -O sudachi.json
