@@ -5,7 +5,8 @@ LABEL maintainer="amano123"
 # sudachi download url
 ENV SUDACHI_URL=https://github.com/WorksApplications/elasticsearch-sudachi/releases/download/v7.8.0-2.0.2/analysis-sudachi-7.8.0-2.0.2.zip
 # dictionary folder path
-ENV DICT_FILE_PATH=/usr/share/elasticsearch/config
+ENV MY_DICT_FILE_PATH=/usr/share/elasticsearch/config
+ENV SUDACHI_DICT_FILE_PATH=/usr/share/elasticsearch/config/sudachi
 # home dictionary path
 ENV HOME=/usr/share/elasticsearch
 # sudachi.json
@@ -22,10 +23,16 @@ RUN yum install -y wget
 
 # sudachi settings
 RUN set -x \
+&&  mkdir ${SUDACHI_DICT_FILE_PATH} \
 # 2020/03/30 の辞書データ(変更注意)
+&&  wget https://object-storage.tyo2.conoha.io/v1/nc_2520839e1f9641b08211a5c85243124a/sudachi/sudachi-dictionary-20200330-core.zip \
+&&  unzip sudachi-dictionary-20200330-core.zip \
+&&  mv ${HOME}/sudachi-dictionary-20200330/system_core.dic ${SUDACHI_DICT_FILE_PATH}/ \
+
 &&  wget https://object-storage.tyo2.conoha.io/v1/nc_2520839e1f9641b08211a5c85243124a/sudachi/sudachi-dictionary-20200330-full.zip \
 &&  unzip sudachi-dictionary-20200330-full.zip \
-&&  mv ${HOME}/sudachi-dictionary-20200330/system_full.dic ${DICT_FILE_PATH}/ \
-&&  touch ${DICT_FILE_PATH}/my_jisho.dic \
-&&  rm -rf ${DICT_FILE_PATH}/sudachi-dictionary-20200330 ${DICT_FILE_PATH}/sudachi-dictionary-20200330.zip \
-&&  wget -P ${HOME}/analysis-sudachi/ ${SUDACHI_JSON_URL} -O sudachi.json
+&&  mv ${HOME}/sudachi-dictionary-20200330/system_full.dic ${SUDACHI_DICT_FILE_PATH}/ \
+
+&&  touch ${MY_DICT_FILE_PATH}/my_jisho.dic \
+&&  rm -rf ${HOME}/sudachi-dictionary-20200330 ${HOME}/sudachi-dictionary-20200330-full.zip ${HOME}/sudachi-dictionary-20200330-core.zip\
+&&  wget ${SUDACHI_JSON_URL} -O ${SUDACHI_DICT_FILE_PATH}
