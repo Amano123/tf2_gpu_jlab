@@ -164,11 +164,14 @@ COPY .zshrc ${HOME}
 
 # jupyter lab 設定
 RUN jupyter notebook --generate-config \
-    &&  sed -i.back \
-        -e "s:^#c.NotebookApp.token = .*$:c.NotebookApp.token = u'':" \
-        -e "s:^#c.NotebookApp.ip = .*$:c.NotebookApp.ip = '0.0.0.0':" \
-        -e "s:^#c.NotebookApp.open_browser = .*$:c.NotebookApp.open_browser = False:" \
-        /home/${USER}/.jupyter/jupyter_notebook_config.py
+&&  sed -i.back \
+    -e "s:^#c.NotebookApp.token = .*$:c.NotebookApp.token = u'':" \
+    -e "s:^#c.NotebookApp.ip = .*$:c.NotebookApp.ip = '0.0.0.0':" \
+    -e "s:^#c.NotebookApp.open_browser = .*$:c.NotebookApp.open_browser = False:" \
+    -e "s:^#c.NotebookApp.token = '<generated>' .*$:c.NotebookApp.token = '' :" \
+    -e "s:^#c.NotebookApp.notebook_dir = ''.*$:c.NotebookApp.notebook_dir = '\/home\/docker\/tokyo2020+1':" \
+    /home/${USER}/.jupyter/jupyter_notebook_config.py \
+&&  chmod -R 777 ${HOME}/.jupyter 
 
 # jupyter lab
 # 変数の中身を確認
