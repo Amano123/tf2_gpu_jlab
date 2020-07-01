@@ -21,18 +21,14 @@ RUN elasticsearch-plugin install analysis-kuromoji \
 # need plugin
 RUN yum install -y wget
 
+WORKDIR ${SUDACHI_DICT_FILE_PATH}/
 # sudachi settings
 RUN set -x \
-&&  mkdir ${SUDACHI_DICT_FILE_PATH} \
 # 2020/03/30 の辞書データ(変更注意)
 &&  wget https://object-storage.tyo2.conoha.io/v1/nc_2520839e1f9641b08211a5c85243124a/sudachi/sudachi-dictionary-20200330-core.zip \
-&&  unzip sudachi-dictionary-20200330-core.zip \
-&&  mv ${HOME}/sudachi-dictionary-20200330/system_core.dic ${SUDACHI_DICT_FILE_PATH}/ \
-
 &&  wget https://object-storage.tyo2.conoha.io/v1/nc_2520839e1f9641b08211a5c85243124a/sudachi/sudachi-dictionary-20200330-full.zip \
-&&  unzip sudachi-dictionary-20200330-full.zip \
-&&  mv ${HOME}/sudachi-dictionary-20200330/system_full.dic ${SUDACHI_DICT_FILE_PATH}/ \
-
+&&  unzip -j sudachi-dictionary-20200330-core.zip "*.dic" \
+&&  unzip -j sudachi-dictionary-20200330-full.zip "*.dic" \
 &&  touch ${MY_DICT_FILE_PATH}/my_jisho.dic \
 &&  rm -rf ${HOME}/sudachi-dictionary-20200330 ${HOME}/sudachi-dictionary-20200330-full.zip ${HOME}/sudachi-dictionary-20200330-core.zip\
-&&  wget ${SUDACHI_JSON_URL} -O ${SUDACHI_DICT_FILE_PATH}
+&&  wget ${SUDACHI_JSON_URL} -O ${SUDACHI_DICT_FILE_PATH}/sudachi_fulldict.json

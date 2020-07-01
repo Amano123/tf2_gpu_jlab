@@ -1,5 +1,9 @@
 backup
 ubuntu/dataset
 ubuntu/wikiextractor
-program_ubuntu
+program_ubuntu/dataset/*
+program_ubuntu/jsai/*
 node_data
+dataset
+jsai
+jsai.zip

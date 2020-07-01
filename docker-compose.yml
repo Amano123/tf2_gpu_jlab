@@ -25,9 +25,11 @@ services:
             context: ./ubuntu
             dockerfile: dockerfile
         container_name: ubuntu
+        runtime: nvidia
+        environment:
+          - NVIDIA_VISIBLE_DEVICES=all
         volumes:
-            - ./program_ubuntu:/home/docker/tokyo2020+1
-            - ./dataset:/home/docker/dataset
+            - ./program_ubuntu:/home/docker/programs
         ports:
             - 8888:8888
         tty: true
