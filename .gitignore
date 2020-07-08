@@ -3,7 +3,11 @@ ubuntu/dataset
 ubuntu/wikiextractor
 program_ubuntu/dataset/*
 program_ubuntu/jsai/*
+program_ubuntu
+!program_ubuntu/jumann++
 node_data
 dataset
 jsai
 jsai.zip
+wikiextractor
+jawiki-latest-pages-articles.xml.bz2

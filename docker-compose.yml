@@ -1,4 +1,4 @@
-version: '3'
+version: '2.3'
 services:
     elasticsearch:
         build:
@@ -27,7 +27,7 @@ services:
         container_name: ubuntu
         runtime: nvidia
         environment:
-          - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_VISIBLE_DEVICES=all
         volumes:
             - ./program_ubuntu:/home/docker/programs
         ports:
